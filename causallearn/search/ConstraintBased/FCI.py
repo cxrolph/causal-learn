@@ -1069,8 +1069,7 @@ def print_edge_status(graph, name_a, name_b):
 
 def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 0.05, depth: int = -1,
         max_path_length: int = -1, verbose: bool = False, background_knowledge: BackgroundKnowledge | None = None, 
-        show_progress: bool = True, node_names = None,*, print_edges_to_trace=None
-        **kwargs) -> Tuple[Graph, List[Edge]]:
+        show_progress: bool = True, node_names = None,*, print_edges_to_trace=None, **kwargs) -> Tuple[Graph, List[Edge]]:
     """
     Perform Fast Causal Inference (FCI) algorithm for causal discovery
 
