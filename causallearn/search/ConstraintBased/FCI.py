@@ -1057,10 +1057,19 @@ def removeByPossibleDsep(graph: Graph, independence_test_method: CIT, alpha: flo
                     sep_sets[(X, Y)] = set(condSet_index)
                     break
 
+def print_edge_status(graph, name_a, name_b):
+    node_map = {node.get_name(): node for node in graph.nodes}
+    edge = graph.get_edge(node_map[name_a], node_map[name_b])
+    if not edge:
+        print(f"Arista {name_a}-{name_b}: ELIMINADA")
+    else:
+        ep1 = edge.get_endpoint1()
+        ep2 = edge.get_endpoint2()
+        print(f"Arista {name_a}-{name_b}: {ep1} - {ep2}")
 
 def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 0.05, depth: int = -1,
         max_path_length: int = -1, verbose: bool = False, background_knowledge: BackgroundKnowledge | None = None, 
-        show_progress: bool = True, node_names = None,
+        show_progress: bool = True, node_names = None,*, print_edges_to_trace=None
         **kwargs) -> Tuple[Graph, List[Edge]]:
     """
     Perform Fast Causal Inference (FCI) algorithm for causal discovery
@@ -1126,22 +1135,43 @@ def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 
     graph, sep_sets, test_results = fas(dataset, nodes, independence_test_method=independence_test_method, alpha=alpha,
                                         knowledge=background_knowledge, depth=depth, verbose=verbose, show_progress=show_progress)
 
+
     # pdb.set_trace()
     reorientAllWith(graph, Endpoint.CIRCLE)
 
+    if print_edges_to_trace is not None:
+        for (name_a, name_b) in print_edges_to_trace:
+            print_edge_status(graph, name_a, name_b)
+
     rule0(graph, nodes, sep_sets, background_knowledge, verbose)
+
+    if print_edges_to_trace is not None:
+        for (name_a, name_b) in print_edges_to_trace:
+            print_edge_status(graph, name_a, name_b)
 
     removeByPossibleDsep(graph, independence_test_method, alpha, sep_sets)
 
     reorientAllWith(graph, Endpoint.CIRCLE)
-    rule0(graph, nodes, sep_sets, background_knowledge, verbose)
+    if print_edges_to_trace is not None:
+        for (name_a, name_b) in print_edges_to_trace:
+            print_edge_status(graph, name_a, name_b)
 
+    rule0(graph, nodes, sep_sets, background_knowledge, verbose)
+    if print_edges_to_trace is not None:
+        for (name_a, name_b) in print_edges_to_trace:
+            print_edge_status(graph, name_a, name_b)
+    
     change_flag = True
     first_time = True
 
     while change_flag:
         change_flag = False
         change_flag = rulesR1R2cycle(graph, background_knowledge, change_flag, verbose)
+
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
         change_flag = ruleR3(graph, sep_sets, background_knowledge, change_flag, verbose)
 
         if change_flag or (first_time and background_knowledge is not None and
@@ -1151,6 +1181,11 @@ def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 
             change_flag = ruleR4B(graph, max_path_length, dataset, independence_test_method, alpha, sep_sets,
                                   change_flag,
                                   background_knowledge, verbose)
+       
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
 
             first_time = False
 
@@ -1159,23 +1194,56 @@ def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 
 
         # rule 5
         change_flag = ruleR5(graph, change_flag, verbose)
+
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
         
         # rule 6
         change_flag = ruleR6(graph, change_flag, verbose)
         
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
         # rule 7
         change_flag = ruleR7(graph, change_flag, verbose)
         
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
+
         # rule 8
         change_flag = rule8(graph,nodes, change_flag)
         
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
+
         # rule 9
         change_flag = rule9(graph, nodes, change_flag)
+            
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+
+
+
         # rule 10
         change_flag = rule10(graph, change_flag)
 
+        if print_edges_to_trace is not None:
+            for (name_a, name_b) in print_edges_to_trace:
+                print_edge_status(graph, name_a, name_b)
+   
     graph.set_pag(True)
 
     edges = get_color_edges(graph)
+
+    if print_edges_to_trace is not None:
+        for (name_a, name_b) in print_edges_to_trace:
+            print_edge_status(graph, name_a, name_b)
 
     return graph, edges
