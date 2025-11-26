@@ -1058,35 +1058,31 @@ def removeByPossibleDsep(graph: Graph, independence_test_method: CIT, alpha: flo
                     break
 
 
-# Diccionario global para recordar el estado anterior de cada arista
-prev_edge_states = {}
-
 def print_edge_status(graph, name_a, name_b):
-    global prev_edge_states
-
-    # Clave única para la arista (ordenada para que A-B == B-A)
-    key = tuple(sorted((name_a, name_b)))
-
     node_map = {node.get_name(): node for node in graph.nodes}
-    edge = graph.get_edge(node_map[name_a], node_map[name_b])
+    na = node_map[name_a]
+    nb = node_map[name_b]
 
+    edge = graph.get_edge(na, nb)
     if not edge:
-        new_state = "ELIMINADA"
+        print(f"Arista {name_a}-{name_b}: ELIMINADA")
+        return
+
+    # edge.node1 / node2 pueden no estar en el mismo orden que (na, nb)
+    n1 = edge.get_node1()
+    n2 = edge.get_node2()
+    e1 = edge.get_endpoint1()
+    e2 = edge.get_endpoint2()
+
+    if n1 is na and n2 is nb:
+        ep_a, ep_b = e1, e2
+    elif n1 is nb and n2 is na:
+        ep_a, ep_b = e2, e1
     else:
-        ep1 = edge.get_endpoint1()
-        ep2 = edge.get_endpoint2()
-        new_state = f"{ep1} - {ep2}"
+        print("Algo raro con los nodos de la arista")
+        return
 
-    # Estado anterior
-    old_state = prev_edge_states.get(key, None)
-
-    # Solo imprime si hay cambio
-    if new_state != old_state:
-        if old_state is None:
-            print(f"Arista {name_a}-{name_b}: {new_state}")
-        else:
-            print(f"Arista {name_a}-{name_b}: {old_state}  ->  {new_state}")
-        prev_edge_states[key] = new_state
+    print(f"Arista {name_a}-{name_b}: {ep_a} - {ep_b}")
 
 def fci(dataset: ndarray, independence_test_method: str=fisherz, alpha: float = 0.05, depth: int = -1,
         max_path_length: int = -1, verbose: bool = False, background_knowledge: BackgroundKnowledge | None = None, 
